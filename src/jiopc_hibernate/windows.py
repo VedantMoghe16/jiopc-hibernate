@@ -91,6 +91,10 @@ def enumerate_windows(timeout: float = 3.0) -> list[Window]:
         return []
 
     windows = _parse_wmctrl(res.lines)
+    if not windows and system.is_wayland():
+        _log.warning(
+            "0 windows and session is Wayland — wmctrl (X11) cannot enumerate "
+            "Wayland windows. The LxQt target runs on X11; use an X11 session.")
     for win in windows:
         _enrich_from_proc(win)
     _log.info("enumerated %d window(s)", len(windows))
