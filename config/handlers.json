@@ -1,0 +1,43 @@
+{
+  "_comment": "JioPC Session Hibernate — per-app restore master list. Ordered: first match wins, generic fallback for anything unmatched. Copy to $XDG_CONFIG_HOME/jiopc-hibernate/handlers.json to override. A rule whose 'handler' is not one of the built-in code handlers (chrome/terminal/filemanager/document) is applied DECLARATIVELY: generic capture plus the static restore_args below — i.e. a new app can be added with config alone, no code change.",
+  "schema_version": 1,
+  "handlers": [
+    {
+      "handler": "chrome",
+      "comment": "Google Chrome / Chromium. Clean-shutdown on save; --restore-last-session on relaunch reopens all tabs.",
+      "wm_class_contains": ["google-chrome", "chromium", "chrome"],
+      "exec_contains": ["google-chrome", "chromium", "chrome"],
+      "restore_args": ["--restore-last-session"],
+      "restore_supported": true
+    },
+    {
+      "handler": "terminal",
+      "comment": "qterminal is the LxQt default (flag --workdir). lxterminal/xterm use --working-directory; adjust per emulator.",
+      "wm_class_contains": ["qterminal", "lxterminal", "xterm", "uxterm", "xfce4-terminal", "gnome-terminal", "konsole"],
+      "exec_contains": ["qterminal", "lxterminal", "xterm", "konsole"],
+      "restore_args": ["--workdir"],
+      "restore_supported": true
+    },
+    {
+      "handler": "filemanager",
+      "comment": "PCManFM-Qt, the LxQt file manager. Takes the folder path as a positional argument.",
+      "wm_class_contains": ["pcmanfm-qt", "pcmanfm"],
+      "exec_contains": ["pcmanfm-qt", "pcmanfm"],
+      "restore_supported": true
+    },
+    {
+      "handler": "document",
+      "comment": "LibreOffice Writer/Calc/Impress and friends. Reopens document path(s) passed as arguments.",
+      "wm_class_contains": ["libreoffice", "soffice"],
+      "exec_contains": ["soffice", "libreoffice"],
+      "restore_supported": true
+    },
+    {
+      "handler": "texteditor",
+      "comment": "EXAMPLE of a declarative (code-free) handler: featherpad/gedit/kate reopen a file passed as an argument. Generic capture finds the file in argv; no Python class required.",
+      "wm_class_contains": ["featherpad", "gedit", "kate", "mousepad"],
+      "exec_contains": ["featherpad", "gedit", "kate", "mousepad"],
+      "restore_supported": false
+    }
+  ]
+}

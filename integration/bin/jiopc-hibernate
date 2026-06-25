@@ -1,0 +1,7 @@
+#!/bin/sh
+# Launcher for the JioPC Session Hibernate dispatcher.
+# Installed to /usr/bin by the .deb; runs the packaged library with the
+# system Python 3 (the package is pure stdlib, no virtualenv needed).
+JH_LIB="${JH_LIB:-/opt/jiopc-hibernate/lib}"
+export PYTHONPATH="${JH_LIB}${PYTHONPATH:+:${PYTHONPATH}}"
+exec python3 -m jiopc_hibernate "$@"

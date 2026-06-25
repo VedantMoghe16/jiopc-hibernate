@@ -1,0 +1,15 @@
+#!/bin/sh
+# prerm — runs as root before removal. Nothing to tear down: the package owns
+# no running system service (the guard runs per-user inside each LxQt session
+# and exits with it), and user state under ~/.local/share is intentionally
+# left untouched so a reinstall can still restore it.
+set -e
+
+case "$1" in
+    remove|upgrade|deconfigure)
+        ;;
+    failed-upgrade)
+        ;;
+esac
+
+exit 0

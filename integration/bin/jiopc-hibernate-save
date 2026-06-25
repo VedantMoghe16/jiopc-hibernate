@@ -1,0 +1,10 @@
+#!/bin/sh
+# Explicit save launcher — wired into the LxQt logout path so a user-initiated
+# disconnect captures the session even before the guard sees a teardown signal.
+# Trigger defaults to user_disconnect; override by passing --trigger.
+JH_LIB="${JH_LIB:-/opt/jiopc-hibernate/lib}"
+export PYTHONPATH="${JH_LIB}${PYTHONPATH:+:${PYTHONPATH}}"
+if [ "$#" -eq 0 ]; then
+    set -- --trigger user_disconnect
+fi
+exec python3 -m jiopc_hibernate save "$@"

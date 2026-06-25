@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jiopc-hibernate"
+version = "1.0.0"
+description = "JioPC Session Hibernate — application-level, cross-VM session save & restore for the LxQt floating-VM platform (user-space, no root, stdlib-only)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "Team InnovAstra" }]
+# Zero Python dependencies on purpose: the system is stdlib-only and talks to
+# the desktop through external CLI tools (wmctrl, xdotool, notify-send), which
+# are OS packages, not pip packages. See packaging/ for the .deb declarations.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+jiopc-hibernate = "jiopc_hibernate.cli:main"
+jiopc-hibernate-save = "jiopc_hibernate.cli:main_save"
+jiopc-hibernate-restore = "jiopc_hibernate.cli:main_restore"
+jiopc-hibernate-guard = "jiopc_hibernate.cli:main_guard"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+jiopc_hibernate = ["handlers/*.json"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

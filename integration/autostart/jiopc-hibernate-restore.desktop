@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=JioPC Session Hibernate (Restore)
+Comment=Offers to restore your previous session after you log in
+Exec=jiopc-hibernate-restore
+# Component E: runs once at login on whatever VM the broker allocated. It
+# checks ~/.local/share/jiopc/hibernate/session-state.json, and if it is
+# recent shows the "Restore your previous session?" notification before
+# relaunching anything. The launcher waits briefly for the notification
+# daemon so the prompt is never missed.
+Terminal=false
+NoDisplay=true
+OnlyShowIn=LXQt;
+X-GNOME-Autostart-enabled=true

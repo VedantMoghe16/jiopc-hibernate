@@ -1,0 +1,26 @@
+#!/bin/sh
+# postinst — runs as root at install time. Must be idempotent and must not
+# touch any user's home directory (state is created lazily, per-user, on first
+# save). Its only jobs: refresh the desktop database and verify python3.
+set -e
+
+case "$1" in
+    configure)
+        # Make sure python3 is genuinely present (Depends should guarantee it).
+        if ! command -v python3 >/dev/null 2>&1; then
+            echo "jiopc-hibernate: WARNING — python3 not found on PATH." >&2
+        fi
+        # Refresh autostart/desktop caches if the tools exist (best-effort).
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database -q /usr/share/applications 2>/dev/null || true
+        fi
+        echo "jiopc-hibernate installed. It will start with each user's next"
+        echo "LxQt login (session guard + restore service via XDG autostart)."
+        echo "Per-user config (optional): ~/.config/jiopc-hibernate/config.json"
+        echo "System reference copies:    /etc/jiopc-hibernate/{config,handlers}.json"
+        ;;
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+esac
+
+exit 0
