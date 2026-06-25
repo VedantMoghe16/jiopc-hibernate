@@ -82,6 +82,20 @@ def test_filemanager_captures_folder(make_docs):
     assert ws.restore_args == [make_docs["docs"]]
 
 
+def test_filemanager_single_instance_resolves_folder_from_title(tmp_path, monkeypatch):
+    """LxQt single-instance pcmanfm-qt: shared --desktop cmdline and $HOME cwd,
+    so the folder must be recovered from the window TITLE."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (tmp_path / "Documents").mkdir()
+    reg = Registry.load()
+    w = _win(wm_class="pcmanfm-qt.pcmanfm-qt", exe="/usr/bin/pcmanfm-qt",
+             cmdline=["/usr/bin/pcmanfm-qt", "--desktop", "--profile=lxqt"],
+             cwd=str(tmp_path), title="Documents")
+    ws = reg.match(w).capture(w)
+    assert ws.restore_args == [str(tmp_path / "Documents")]
+    assert ws.restore_supported is True
+
+
 def test_declarative_handler_added_by_config_only(tmp_path):
     """A handler name with no Python class still works from JSON alone."""
     rules = tmp_path / "handlers.json"

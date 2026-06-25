@@ -212,6 +212,22 @@ the design above.
 - **On-VM acceptance**: the cross-VM demo runbook (`demo/DEMO.md`) walks the
   exact reviewer checklist on a real Ubuntu 24.04 + LxQt VM.
 
+## 8a. Validated on the target VM
+
+The system was run on the real stack — **Ubuntu 24.04.4 LTS + LXQt + X11,
+4 vCPU** (full data in `benchmarks/vm-results.md`). Highlights: 35/35 tests +
+self-test pass on the VM's system Python 3.12; live `wmctrl`+`/proc` save of a
+5-window session in **18.9 ms mean / 26.5 ms p95** (~0.2% of the 10 s budget);
+correct capture of per-terminal `cwd`, file-manager folder, and display size;
+`.deb` builds cleanly. The live run also surfaced and fixed a real edge case —
+single-instance pcmanfm-qt serves the desktop background and all file windows
+from one PID with a shared `--desktop` cmdline, so the desktop window is now
+filtered by *title* (`ignore_title_patterns`) while real file windows are kept,
+and the file-manager folder is recovered from the window title when /proc can't
+provide it. Notably the VM is **aarch64** while the Gold Image is amd64: the
+system ran unmodified, confirming the stdlib-only / `Architecture: all`
+portability claim.
+
 ## 9. Bonus goals delivered
 
 - **Extra handler / extensibility** — declarative handlers (config-only) plus
