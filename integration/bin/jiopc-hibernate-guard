@@ -1,0 +1,5 @@
+#!/bin/sh
+# Component A daemon launcher (autostarted with the LxQt session).
+JH_LIB="${JH_LIB:-/opt/jiopc-hibernate/lib}"
+export PYTHONPATH="${JH_LIB}${PYTHONPATH:+:${PYTHONPATH}}"
+exec python3 -m jiopc_hibernate guard

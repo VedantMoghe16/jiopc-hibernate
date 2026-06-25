@@ -1,0 +1,20 @@
+{
+  "_comment": "JioPC Session Hibernate configuration. Copy to $XDG_CONFIG_HOME/jiopc-hibernate/config.json (i.e. ~/.config/jiopc-hibernate/config.json) and edit. Any field omitted falls back to the built-in default shown here. A malformed file is ignored (defaults used) so config can never block a save.",
+
+  "save_time_budget_ms": 10000,
+  "per_window_timeout_ms": 1500,
+  "idle_timeout_s": 600,
+  "idle_poll_interval_s": 15,
+
+  "staleness_threshold_s": 86400,
+  "restore_prompt_timeout_s": 60,
+  "relaunch_stagger_ms": 400,
+  "history_depth": 3,
+  "restore_geometry": true,
+
+  "chrome_clean_shutdown": true,
+  "ignore_patterns": [
+    "lxqt-panel", "pcmanfm-qt --desktop", "lxqt-runner", "xfdesktop",
+    "plank", "conky", "jiopc-home", "jiopc-hibernate", "lxqt-notificationd"
+  ]
+}

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Component E launcher (autostarted at login).
+# A short settle delay lets the LxQt notification daemon and window manager
+# come up first, so the "Restore previous session?" prompt is never missed
+# and relaunched windows have a WM to place them. Tunable via JH_RESTORE_DELAY.
+JH_LIB="${JH_LIB:-/opt/jiopc-hibernate/lib}"
+export PYTHONPATH="${JH_LIB}${PYTHONPATH:+:${PYTHONPATH}}"
+sleep "${JH_RESTORE_DELAY:-3}"
+exec python3 -m jiopc_hibernate restore

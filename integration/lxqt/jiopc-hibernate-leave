@@ -1,0 +1,19 @@
+#!/bin/sh
+# Optional explicit logout wrapper (Component A, path 2).
+# Saves the session synchronously (bounded by the 10 s budget) and THEN hands
+# off to the real LxQt leave action, so existing logout behaviour is unchanged
+# — the save is simply prepended. Bind your disconnect button/shortcut to this.
+#
+# The save is time-boxed by the tool's own budget; we add a hard outer cap with
+# `timeout` as a belt-and-braces guarantee that logout is never blocked.
+timeout 12 jiopc-hibernate save --trigger user_disconnect >/dev/null 2>&1 || true
+
+# Hand off to the existing logout flow (unchanged).
+if command -v lxqt-leave >/dev/null 2>&1; then
+    exec lxqt-leave --logout
+elif command -v lxqt-session >/dev/null 2>&1; then
+    exec lxqt-session -q
+else
+    # Last resort: leave the rest to the session manager.
+    exit 0
+fi

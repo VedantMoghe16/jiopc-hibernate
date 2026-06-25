@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=JioPC Session Hibernate (Guard)
+Comment=Saves your running session automatically on inactivity or disconnect
+Exec=jiopc-hibernate-guard
+# Component A: the session-end hook. Started with the LxQt session, it traps
+# logout/teardown signals (user_disconnect) and polls X11 idle time
+# (inactivity_timeout). It never locks or logs you out — it only adds the
+# save step, leaving existing disconnect/logout behaviour unchanged.
+Terminal=false
+NoDisplay=true
+X-LXQt-Need-Tray=false
+OnlyShowIn=LXQt;
+X-GNOME-Autostart-enabled=true
