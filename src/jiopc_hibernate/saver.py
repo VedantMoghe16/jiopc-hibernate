@@ -114,6 +114,19 @@ def _hostname() -> str:
 
 
 def _is_ignored(win: win_mod.Window, cfg: Config) -> bool:
-    """Skip our own shell, panels and the restore prompt itself."""
-    haystack = " ".join(filter(None, [win.wm_class, win.exe, *(win.cmdline or [])])).lower()
-    return any(pat.lower() in haystack for pat in cfg.ignore_patterns)
+    """Skip our own shell, panels, and desktop-background windows.
+
+    Name-based patterns match wm_class/exec/argv0 only — never the full
+    cmdline — so a single-instance app (e.g. pcmanfm-qt, which serves the
+    desktop *and* file windows from one PID with a shared `--desktop`
+    cmdline) doesn't have its real windows dropped. The desktop-background
+    window is filtered separately, by its title.
+    """
+    argv0 = win.cmdline[0] if win.cmdline else ""
+    name_hay = " ".join(filter(None, [win.wm_class, win.exe, argv0])).lower()
+    if any(pat.lower() in name_hay for pat in cfg.ignore_patterns):
+        return True
+    title = (win.title or "").lower()
+    if any(pat.lower() in title for pat in cfg.ignore_title_patterns):
+        return True
+    return False

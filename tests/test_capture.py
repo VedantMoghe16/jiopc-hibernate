@@ -57,6 +57,26 @@ def test_ignore_patterns_skip_shell(data_home, monkeypatch):
     assert sess.windows == []  # the shell itself is never captured
 
 
+def test_pcmanfm_desktop_ignored_but_file_window_kept(data_home, monkeypatch):
+    """Single-instance pcmanfm-qt: desktop bg and a file window share one PID
+    (and a `--desktop` cmdline). The desktop must be dropped by title; the
+    real file window must still be captured."""
+    from jiopc_hibernate.windows import Window
+    shared_cmd = ["pcmanfm-qt", "--desktop", "--profile", "lxqt"]
+    desktop = Window("0x01", -1, 176371, 0, 0, 1280, 720, "pcmanfm-qt.pcmanfm-qt",
+                     "h", "pcmanfm-desktop0", exe="/usr/bin/pcmanfm-qt",
+                     cmdline=shared_cmd, cwd="/home/u")
+    filewin = Window("0x02", 0, 176371, 50, 50, 900, 600, "pcmanfm-qt.pcmanfm-qt",
+                     "h", "Documents", exe="/usr/bin/pcmanfm-qt",
+                     cmdline=shared_cmd, cwd="/home/u")
+    monkeypatch.setattr(win_mod, "enumerate_windows", lambda timeout=3.0: [desktop, filewin])
+    monkeypatch.setattr(win_mod, "display_geometry", lambda timeout=2.0: None)
+    sess = saver.save_session("manual", cfg=Config())
+    titles = [w.title for w in sess.windows]
+    assert titles == ["Documents"]            # desktop dropped, file window kept
+    assert sess.windows[0].handler == "filemanager"
+
+
 def test_save_never_raises_on_empty(data_home, monkeypatch):
     monkeypatch.setattr(win_mod, "enumerate_windows", lambda timeout=3.0: [])
     monkeypatch.setattr(win_mod, "display_geometry", lambda timeout=2.0: None)

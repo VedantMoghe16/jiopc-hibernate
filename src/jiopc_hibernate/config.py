@@ -57,11 +57,20 @@ class Config:
     chrome_clean_shutdown: bool = True
     #: WM_CLASS / executable substrings that are never captured (the shell
     #: itself, panels, the restore prompt — restoring them is meaningless).
+    #: Matched against wm_class + exec + argv0 (NOT the full cmdline, so a
+    #: single-instance app whose shared cmdline contains a flag like --desktop
+    #: doesn't cause its real windows to be dropped — see ignore_title_patterns).
     ignore_patterns: list[str] = field(
         default_factory=lambda: [
-            "lxqt-panel", "pcmanfm-qt --desktop", "lxqt-runner", "xfdesktop",
-            "plank", "conky", "jiopc-home", "jiopc-hibernate", "lxqt-notificationd",
+            "lxqt-panel", "lxqt-runner", "xfdesktop", "plank", "conky",
+            "jiopc-home", "jiopc-hibernate", "lxqt-notificationd",
         ]
+    )
+    #: Window-TITLE substrings that mark a desktop-background window (the file
+    #: manager drawing the wallpaper/icons). These share a PID with real file
+    #: windows, so they must be filtered by title, not by process.
+    ignore_title_patterns: list[str] = field(
+        default_factory=lambda: ["pcmanfm-desktop", "xfdesktop", "Desktop —"]
     )
 
     @classmethod
