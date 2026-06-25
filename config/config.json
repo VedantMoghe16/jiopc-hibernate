@@ -14,7 +14,8 @@
 
   "chrome_clean_shutdown": true,
   "ignore_patterns": [
-    "lxqt-panel", "pcmanfm-qt --desktop", "lxqt-runner", "xfdesktop",
-    "plank", "conky", "jiopc-home", "jiopc-hibernate", "lxqt-notificationd"
-  ]
+    "lxqt-panel", "lxqt-runner", "xfdesktop", "plank", "conky",
+    "jiopc-home", "jiopc-hibernate", "lxqt-notificationd"
+  ],
+  "ignore_title_patterns": ["pcmanfm-desktop", "xfdesktop", "Desktop —"]
 }
