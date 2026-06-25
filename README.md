@@ -76,6 +76,20 @@ save/restore pipeline is exercised off-target. On a box with no `wmctrl`/X11 it
 degrades cleanly: enumeration returns nothing, a valid (empty) state is written,
 nothing crashes.
 
+## Validated on a real VM
+
+Measured on the actual target stack — **Ubuntu 24.04.4 LTS + LXQt + X11, 4 vCPU**
+(VirtualBox; full results in [benchmarks/vm-results.md](benchmarks/vm-results.md)):
+
+- **35/35 tests** pass, self-test passes, on the VM's system Python 3.12.
+- **Live save: 18.9 ms mean / 26.5 ms p95** for a 5-window session — ~0.2% of
+  the 10 s budget (it cannot block logout).
+- Real `wmctrl` + `/proc` capture verified: per-terminal `cwd`, file-manager
+  folder, display resolution, and correct handling of the single-instance
+  pcmanfm-qt desktop-vs-file-window case.
+- **`.deb` builds cleanly** and the whole system ran **unmodified on aarch64**,
+  proving the stdlib-only / `Architecture: all` portability claim.
+
 ## Configuration highlights
 
 | Key | Default | Meaning |
