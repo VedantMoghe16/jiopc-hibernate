@@ -30,6 +30,28 @@ def is_linux() -> bool:
     return sys.platform.startswith("linux")
 
 
+def display_server() -> str:
+    """Best-effort detection of the display server: 'x11' | 'wayland' | 'none'.
+
+    The challenge target is LxQt on **X11**, where wmctrl works. Under Wayland
+    (e.g. GNOME's default session) wmctrl cannot enumerate native windows, so
+    detecting this lets us emit a clear diagnostic instead of silently
+    capturing nothing.
+    """
+    st = os.environ.get("XDG_SESSION_TYPE", "").lower()
+    if st in ("x11", "wayland"):
+        return st
+    if os.environ.get("WAYLAND_DISPLAY"):
+        return "wayland"
+    if os.environ.get("DISPLAY"):
+        return "x11"
+    return "none"
+
+
+def is_wayland() -> bool:
+    return display_server() == "wayland"
+
+
 def have(tool: str) -> bool:
     """True if *tool* is on PATH."""
     return shutil.which(tool) is not None

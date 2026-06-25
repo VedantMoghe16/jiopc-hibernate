@@ -22,6 +22,12 @@ section "0. ENVIRONMENT"
 uname -a
 . /etc/os-release 2>/dev/null && echo "distro: $PRETTY_NAME"
 echo "desktop: ${XDG_CURRENT_DESKTOP:-unknown}  session: ${XDG_SESSION_TYPE:-unknown}"
+if [ "${XDG_SESSION_TYPE:-}" = "wayland" ]; then
+    echo "!! WARNING: this is a WAYLAND session. wmctrl is an X11 tool and CANNOT"
+    echo "!! enumerate Wayland windows, so live capture (steps 5/6/9) will find 0"
+    echo "!! windows. The challenge target is LxQt on X11. Log out and pick an"
+    echo "!! 'LXQt' (X11) session at the login screen, then re-run this script."
+fi
 python3 --version
 echo "nproc: $(nproc)  mem: $(free -m 2>/dev/null | awk '/Mem:/{print $2"MB"}')"
 

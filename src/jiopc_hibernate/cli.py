@@ -60,6 +60,9 @@ def _cmd_status(_args) -> int:
     cfg = Config.load()
     print(f"jiopc-hibernate {__version__}")
     print(f"platform        : {'linux' if system.is_linux() else sys.platform}")
+    ds = system.display_server()
+    warn = "  ** WARNING: wmctrl needs X11; the LxQt target is X11 **" if ds == "wayland" else ""
+    print(f"display server  : {ds}{warn}")
     print(f"state dir       : {paths.home()}")
     print(f"config dir      : {paths.config_dir()}")
     print("tooling         : " + ", ".join(
