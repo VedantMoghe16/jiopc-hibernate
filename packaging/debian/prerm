@@ -1,12 +1,27 @@
 #!/bin/sh
-# prerm — runs as root before removal. Nothing to tear down: the package owns
-# no running system service (the guard runs per-user inside each LxQt session
-# and exits with it), and user state under ~/.local/share is intentionally
-# left untouched so a reinstall can still restore it.
+# prerm — runs as root before removal. Restores the real lxqt-leave command if
+# this package bound it through dpkg-divert. The package owns no running system
+# service (the guard runs per-user inside each LxQt session and exits with it),
+# and user state under ~/.local/share is intentionally left untouched so a
+# reinstall can still restore it.
 set -e
 
+PKG=jiopc-hibernate
+LXQT_LEAVE=/usr/bin/lxqt-leave
+
+unbind_lxqt_leave() {
+    if command -v dpkg-divert >/dev/null 2>&1 \
+        && dpkg-divert --list "$LXQT_LEAVE" | grep -q "$PKG"; then
+        rm -f "$LXQT_LEAVE"
+        dpkg-divert --package "$PKG" --rename --remove "$LXQT_LEAVE"
+    fi
+}
+
 case "$1" in
-    remove|upgrade|deconfigure)
+    remove|deconfigure)
+        unbind_lxqt_leave
+        ;;
+    upgrade)
         ;;
     failed-upgrade)
         ;;

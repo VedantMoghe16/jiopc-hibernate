@@ -1,19 +1,37 @@
 #!/bin/sh
-# Optional explicit logout wrapper (Component A, path 2).
-# Saves the session synchronously (bounded by the 10 s budget) and THEN hands
-# off to the real LxQt leave action, so existing logout behaviour is unchanged
-# — the save is simply prepended. Bind your disconnect button/shortcut to this.
+# Synchronous LXQt leave wrapper (Component A).
 #
-# The save is time-boxed by the tool's own budget; we add a hard outer cap with
-# `timeout` as a belt-and-braces guarantee that logout is never blocked.
-timeout 12 jiopc-hibernate save --trigger user_disconnect >/dev/null 2>&1 || true
+# The .deb binds this script in front of the real `lxqt-leave` command via
+# dpkg-divert, so panel/menu/shortcut logout actions save while user windows
+# are still alive. Then we exec the real LXQt leave binary with the original
+# arguments, preserving normal logout/disconnect behaviour. This includes the
+# common no-argument call that opens LXQt's normal leave dialog.
 
-# Hand off to the existing logout flow (unchanged).
-if command -v lxqt-leave >/dev/null 2>&1; then
-    exec lxqt-leave --logout
-elif command -v lxqt-session >/dev/null 2>&1; then
-    exec lxqt-session -q
+# The saver has its own 10 s budget; `timeout` is an outer cap so logout can
+# never be held indefinitely if Python or the shell environment is unhealthy.
+if command -v timeout >/dev/null 2>&1; then
+    timeout 12 jiopc-hibernate save --trigger user_disconnect >/dev/null 2>&1 || true
 else
-    # Last resort: leave the rest to the session manager.
-    exit 0
+    jiopc-hibernate save --trigger user_disconnect >/dev/null 2>&1 || true
 fi
+
+# postinst diverts the original binary here. Also tolerate dpkg-divert's
+# default suffix in case an admin applied it manually while testing.
+for real_leave in /usr/bin/lxqt-leave.real /usr/bin/lxqt-leave.distrib; do
+    if [ -x "$real_leave" ]; then
+        exec "$real_leave" "$@"
+    fi
+done
+
+# Source-tree/manual fallback: when this script is run directly and lxqt-leave
+# has not been diverted, call the normal command. Avoid recursion if this very
+# script is currently installed as /usr/bin/lxqt-leave.
+if [ "$(basename "$0")" != "lxqt-leave" ] && command -v lxqt-leave >/dev/null 2>&1; then
+    exec lxqt-leave "$@"
+fi
+
+if command -v lxqt-session >/dev/null 2>&1; then
+    exec lxqt-session -q
+fi
+
+exit 0
