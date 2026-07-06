@@ -1,11 +1,46 @@
 #!/bin/sh
 # postinst — runs as root at install time. Must be idempotent and must not
 # touch any user's home directory (state is created lazily, per-user, on first
-# save). Its only jobs: refresh the desktop database and verify python3.
+# save). Its jobs: bind the LXQt leave action through our pre-save wrapper,
+# refresh the desktop database, and verify python3.
 set -e
+
+PKG=jiopc-hibernate
+LXQT_LEAVE=/usr/bin/lxqt-leave
+LXQT_LEAVE_REAL=/usr/bin/lxqt-leave.real
+JIOPC_LEAVE=/usr/bin/jiopc-hibernate-leave
+
+bind_lxqt_leave() {
+    if [ ! -x "$JIOPC_LEAVE" ]; then
+        echo "jiopc-hibernate: WARNING — $JIOPC_LEAVE missing; logout wrapper not installed." >&2
+        return 0
+    fi
+
+    if ! command -v dpkg-divert >/dev/null 2>&1; then
+        echo "jiopc-hibernate: WARNING — dpkg-divert missing; logout wrapper not installed." >&2
+        return 0
+    fi
+
+    diversion="$(dpkg-divert --list "$LXQT_LEAVE" || true)"
+    if [ -n "$diversion" ] && ! printf '%s\n' "$diversion" | grep -q "$PKG"; then
+        echo "jiopc-hibernate: WARNING — $LXQT_LEAVE is already diverted by another package; leaving it unchanged." >&2
+        return 0
+    fi
+
+    if [ -z "$diversion" ]; then
+        if [ -e "$LXQT_LEAVE" ]; then
+            dpkg-divert --package "$PKG" --divert "$LXQT_LEAVE_REAL" --rename --add "$LXQT_LEAVE"
+        else
+            dpkg-divert --package "$PKG" --divert "$LXQT_LEAVE_REAL" --add "$LXQT_LEAVE"
+        fi
+    fi
+
+    install -m 0755 "$JIOPC_LEAVE" "$LXQT_LEAVE"
+}
 
 case "$1" in
     configure)
+        bind_lxqt_leave
         # Make sure python3 is genuinely present (Depends should guarantee it).
         if ! command -v python3 >/dev/null 2>&1; then
             echo "jiopc-hibernate: WARNING — python3 not found on PATH." >&2
@@ -15,7 +50,8 @@ case "$1" in
             update-desktop-database -q /usr/share/applications 2>/dev/null || true
         fi
         echo "jiopc-hibernate installed. It will start with each user's next"
-        echo "LxQt login (session guard + restore service via XDG autostart)."
+        echo "LxQt login (guard + restore autostart). LXQt logout now runs"
+        echo "jiopc-hibernate-leave before the real lxqt-leave action."
         echo "Per-user config (optional): ~/.config/jiopc-hibernate/config.json"
         echo "System reference copies:    /etc/jiopc-hibernate/{config,handlers}.json"
         ;;

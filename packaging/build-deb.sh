@@ -5,14 +5,16 @@
 #
 #   /opt/jiopc-hibernate/lib/jiopc_hibernate/...   the Python package
 #   /usr/bin/jiopc-hibernate{,-guard,-restore,-save,-leave}   launchers
-#   /etc/xdg/autostart/jiopc-hibernate-guard.desktop          Component A (start)
+#   /usr/bin/lxqt-leave                                      diverted wrapper
+#   /etc/xdg/autostart/jiopc-hibernate-guard.desktop          Component A (idle)
 #   /etc/xdg/autostart/jiopc-hibernate-restore.desktop        Component E (login)
 #   /etc/jiopc-hibernate/{config.json,handlers.json}          editable references
 #   /usr/share/doc/jiopc-hibernate/{copyright,changelog.gz,...}
 #
 # It installs cleanly on a fresh Ubuntu 24.04 + LxQt VM with no user
 # interaction: the autostart entries in /etc/xdg/autostart apply to every
-# user's LxQt session automatically, so there is nothing per-user to wire up.
+# user's LxQt session automatically, and postinst binds lxqt-leave through
+# jiopc-hibernate-leave so manual logout saves before windows are closed.
 #
 # Run on Ubuntu 24.04 (or any host with dpkg-deb). On macOS dev machines only
 # `bash -n packaging/build-deb.sh` syntax-checking and a --dry-run stage are
@@ -109,8 +111,9 @@ Description: JioPC application-level cross-VM session save & restore
  Saves the running GUI session (open apps, geometry, per-app in-app state)
  to the persistent home directory on disconnect, and offers to restore it on
  the next login on any VM in the pool. User-space, no root, stdlib-only.
- Integrates with the LxQt session via XDG autostart; never blocks logout and
- never crashes the desktop session.
+ Integrates with the LxQt session via XDG autostart and a dpkg-diverted
+ lxqt-leave wrapper, so logout saves before windows are closed while normal
+ logout continues. Never crashes the desktop session.
 EOF
 
 cp "${REPO_ROOT}/packaging/debian/postinst" "${BUILD}/DEBIAN/postinst"

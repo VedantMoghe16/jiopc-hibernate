@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from jiopc_hibernate import saver, windows as win_mod
+from jiopc_hibernate import paths, saver, state as state_mod, windows as win_mod
 from jiopc_hibernate.config import Config
 from jiopc_hibernate.unsaved import has_unsaved_marker
 from jiopc_hibernate.windows import _parse_wmctrl
@@ -83,3 +83,34 @@ def test_save_never_raises_on_empty(data_home, monkeypatch):
     sess = saver.save_session("inactivity_timeout", cfg=Config())
     assert sess.windows == []
     assert sess.trigger == "inactivity_timeout"
+
+
+def test_late_empty_logout_save_does_not_overwrite_good_state(data_home, monkeypatch):
+    """A teardown signal after the leave wrapper may see zero windows.
+
+    That late empty user_disconnect save must not rotate away the good early
+    logout snapshot that restore should use on the next login.
+    """
+    good = state_mod.SessionState(
+        trigger=state_mod.TRIGGER_USER_DISCONNECT,
+        saved_at=state_mod.utc_now_iso(1000),
+        windows=[state_mod.WindowState(app_name="Terminal", exec="/usr/bin/qterminal")],
+    )
+    state_mod.write_state(good)
+
+    monkeypatch.setattr(win_mod, "enumerate_windows", lambda timeout=3.0: [])
+    monkeypatch.setattr(win_mod, "display_geometry", lambda timeout=2.0: None)
+
+    returned = saver.save_session(
+        state_mod.TRIGGER_USER_DISCONNECT,
+        cfg=Config(history_depth=3),
+        now=1005,
+    )
+
+    current = state_mod.read_state()
+    assert current is not None
+    assert len(current.windows) == 1
+    assert current.windows[0].app_name == "Terminal"
+    assert returned.saved_at == good.saved_at
+    assert paths.last_state_file().exists() is False
+    assert state_mod.list_history() == []

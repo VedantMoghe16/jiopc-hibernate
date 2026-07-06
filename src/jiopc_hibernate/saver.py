@@ -58,7 +58,7 @@ def save_session(
     )
 
     raw_windows = win_mod.enumerate_windows(timeout=min(cfg.save_time_budget_s, 3.0))
-    captured: list[SessionState] = []
+    captured: list[win_mod.Window] = []
     budget_exceeded = False
 
     for win in raw_windows:
@@ -87,6 +87,14 @@ def save_session(
     session.budget_exceeded = budget_exceeded
     session.save_duration_ms = int((time.monotonic() - started) * 1000)
 
+    existing = _recent_non_empty_state_to_keep(session, cfg, now=wall_now)
+    if existing is not None:
+        _log.info(
+            "skipping empty %s save: keeping existing non-empty state with %d window(s)",
+            trigger, len(existing.windows),
+        )
+        return existing
+
     # History snapshot (bonus) happens before we overwrite the live file.
     try:
         state_mod.rotate_history(cfg.history_depth, epoch=wall_now)
@@ -104,6 +112,30 @@ def save_session(
         cfg.save_time_budget_ms, budget_exceeded,
     )
     return session
+
+
+def _recent_non_empty_state_to_keep(
+    candidate: SessionState,
+    cfg: Config,
+    now: float,
+) -> SessionState | None:
+    """Protect a good early logout save from a later empty teardown save.
+
+    The LXQt leave wrapper saves synchronously before windows are closed. A
+    guard process can still receive SIGTERM later during session teardown, at
+    which point `wmctrl` may see zero windows. That empty terminal save must
+    not rotate the good file into history and replace the restore target.
+    """
+    if candidate.windows:
+        return None
+    if candidate.trigger not in _TERMINAL_TRIGGERS:
+        return None
+    existing = state_mod.read_state()
+    if existing is None or not existing.windows:
+        return None
+    if existing.is_stale(cfg.staleness_threshold_s, now=now):
+        return None
+    return existing
 
 
 def _hostname() -> str:

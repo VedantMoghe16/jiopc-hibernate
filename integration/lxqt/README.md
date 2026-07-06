@@ -3,19 +3,16 @@
 The state save must fire on **both** disconnect paths the spec names —
 inactivity timeout and user-initiated disconnect/logout — **without** a new
 "Hibernate" button and **without** changing existing logout behaviour. We do
-that with the autostarted **guard daemon** (`jiopc-hibernate-guard`), and
-offer an optional explicit logout wrapper for teams that prefer it.
+that with two user-space hooks:
 
-## 1. Primary mechanism — the guard daemon (zero config, recommended)
+1. the autostarted **guard daemon** (`jiopc-hibernate-guard`) for idle saves;
+2. a direct `lxqt-leave` wrapper for manual logout/disconnect, installed by
+   the `.deb` with `dpkg-divert`.
+
+## 1. Inactivity mechanism — the guard daemon
 
 `integration/autostart/jiopc-hibernate-guard.desktop` starts the guard with
 the LxQt session. It needs no patching of `lxqt-session` and no root:
-
-- **User-initiated disconnect / logout.** When LxQt tears the session down,
-  `lxqt-session` sends `SIGTERM` to its autostart children (and the X server
-  sends `SIGHUP` on display loss). The guard traps these, runs **one** bounded
-  save tagged `user_disconnect`, then exits so teardown proceeds untouched.
-  We *add* the save step; logout itself is unchanged.
 
 - **Inactivity timeout.** The guard samples X11 idle time (`xprintidle`, or
   `xssstate -i` via the XScreenSaver extension) every `idle_poll_interval_s`.
@@ -23,31 +20,40 @@ the LxQt session. It needs no patching of `lxqt-session` and no root:
   `inactivity_timeout` and latches until the user is active again. It never
   locks the screen or ends the session — that stays the desktop's job.
 
-A 5-second debounce stops the two paths from double-saving when an idle save
-is immediately followed by a logout `SIGTERM`.
+The guard still traps teardown signals as a fallback, but manual logout should
+not rely on teardown timing because LXQt may already have closed user windows.
 
-> Why a daemon and not an `lxqt-session` patch? It is user-space, no-root,
-> reversible, and survives LxQt point releases. It is additive by construction:
-> if it dies, logout still works; it just doesn't save.
+## 2. Manual logout/disconnect mechanism — direct `lxqt-leave` wrapper
 
-## 2. Optional — explicit logout wrapper
+The package binds `jiopc-hibernate-leave` directly before the normal LXQt leave
+action:
 
-Some deployments want the save to happen *synchronously before* the logout
-action, independent of signal timing. Bind the "Logout/Disconnect" action (or
-a keyboard shortcut) to the wrapper in this directory:
-
-```ini
-# ~/.config/lxqt/globalkeyshortcuts.conf  (or a custom menu/panel action)
-[General]
-...
-# Example: bind your disconnect button/shortcut to:
-#   jiopc-hibernate-leave
+```text
+/usr/bin/lxqt-leave          -> jiopc-hibernate wrapper
+/usr/bin/lxqt-leave.real     -> original LXQt leave binary
 ```
 
-`jiopc-hibernate-leave` runs `jiopc-hibernate save --trigger user_disconnect`
-(bounded by the 10 s budget) and then calls the real `lxqt-leave --logout`,
-so existing logout behaviour is preserved exactly — the save is simply
-prepended.
+This is installed by `packaging/debian/postinst` using `dpkg-divert`. Every
+normal LXQt panel/menu/shortcut call to `lxqt-leave` now runs:
+
+```text
+jiopc-hibernate save --trigger user_disconnect
+exec /usr/bin/lxqt-leave.real <original args>
+```
+
+That means the save happens synchronously while Chrome, terminals, file
+manager windows, and document apps are still open. The wrapper preserves the
+original `lxqt-leave` arguments exactly, including the no-argument mode LXQt
+uses to show its normal leave dialog. Normal logout/disconnect behaviour
+continues after the bounded save. `packaging/debian/prerm` removes the wrapper
+and restores the original binary on uninstall.
+
+For source-tree testing without installing the `.deb`, run the wrapper
+directly:
+
+```ini
+jiopc-hibernate-leave
+```
 
 ## 3. Verifying
 
