@@ -11,6 +11,7 @@ sudo apt install -y xdotool zenity x11-utils   # optional
 ## 2. Build And Install
 ```sh
 packaging/build-deb.sh
+if in case of permission denied: use "chmod +x packaging/build-deb.sh" and again try the above
 sudo apt install ./packaging/dist/jiopc-hibernate_1.0.0_all.deb
 ```
 On non-Debian systems, validate layout only with `packaging/build-deb.sh --stage`.
